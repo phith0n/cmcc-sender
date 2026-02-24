@@ -20,6 +20,15 @@ with open(config_path, "r", encoding="utf-8") as f:
     config = yaml.safe_load(f)
 
 
+def parse_sms_timestamp(raw):
+    """解析短信时间字符串，格式为 YYMMDDHHmmSScc（如 26022423261432）。"""
+    time_conf = config.get("time", {})
+    tz_name = time_conf.get("timezone", "Asia/Singapore")
+    time_format = time_conf.get("format", "%d/%m/%Y %I:%M:%S %p")
+    dt = datetime.strptime(raw[:12], "%y%m%d%H%M%S").replace(tzinfo=ZoneInfo(tz_name))
+    return dt.strftime(time_format)
+
+
 def check_auth():
     """校验请求鉴权 token，若未配置则跳过。"""
     token = config.get("server", {}).get("auth_token", "")
@@ -47,18 +56,10 @@ def receive_sms():
 
     logger.info("Received SMS from %s, message: %s", data.get("sender"), data.get("message"))
 
-    ts = data["timestamp"]
     try:
-        ts_val = int(ts)
-        if ts_val > 1e12:
-            ts_val = ts_val / 1000
-        time_conf = config.get("time", {})
-        tz_name = time_conf.get("timezone", "Asia/Singapore")
-        time_format = time_conf.get("format", "%d/%m/%Y %I:%M:%S %p")
-        tz = ZoneInfo(tz_name)
-        data["timestamp"] = datetime.fromtimestamp(ts_val, tz=tz).strftime(time_format)
-    except (ValueError, TypeError, OSError):
-        pass
+        data["timestamp"] = parse_sms_timestamp(str(data["timestamp"]))
+    except (ValueError, TypeError):
+        logger.warning("Failed to parse timestamp: %s", data["timestamp"])
 
     results = dispatch(data, config)
     return jsonify({"results": results})
