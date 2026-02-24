@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone, timedelta
 import yaml
 from flask import Flask, request, jsonify
 from notifiers import dispatch
@@ -31,6 +32,19 @@ def receive_sms():
     missing = [f for f in ("sender", "message", "timestamp") if f not in data]
     if missing:
         return jsonify({"error": f"missing fields: {', '.join(missing)}"}), 400
+
+    ts = data["timestamp"]
+    try:
+        ts_val = int(ts)
+        if ts_val > 1e12:
+            ts_val = ts_val / 1000
+        time_conf = config.get("time", {})
+        utc_offset = time_conf.get("utc_offset", 8)
+        time_format = time_conf.get("format", "%d/%m/%Y %H:%M:%S")
+        tz = timezone(timedelta(hours=utc_offset))
+        data["timestamp"] = datetime.fromtimestamp(ts_val, tz=tz).strftime(time_format)
+    except (ValueError, TypeError, OSError):
+        pass
 
     results = dispatch(data, config)
     return jsonify({"results": results})

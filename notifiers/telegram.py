@@ -8,7 +8,7 @@ def send(sms_data, config):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
 
     text = (
-        f"📱 新短信\n"
+        f"📱 收到新短信\n"
         f"发送者: {sms_data['sender']}\n"
         f"时间: {sms_data['timestamp']}\n"
         f"内容: {sms_data['message']}"

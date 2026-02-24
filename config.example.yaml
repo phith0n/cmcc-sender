@@ -4,6 +4,12 @@ server:
   # 可选：接口鉴权 token，为空则不校验
   auth_token: ""
 
+time:
+  # UTC 偏移小时数，新加坡/中国为 8
+  utc_offset: 8
+  # 时间显示格式（Python strftime），默认新加坡格式 dd/mm/yyyy
+  format: "%d/%m/%Y %H:%M:%S"
+
 notifiers:
   telegram:
     enabled: true
