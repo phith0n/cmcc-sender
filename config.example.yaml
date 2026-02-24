@@ -1,0 +1,16 @@
+server:
+  host: "0.0.0.0"
+  port: 5000
+  # 可选：接口鉴权 token，为空则不校验
+  auth_token: ""
+
+notifiers:
+  telegram:
+    enabled: true
+    bot_token: "your-bot-token"
+    chat_id: "your-chat-id"
+
+  bark:
+    enabled: true
+    # Bark 推送 URL，格式: https://api.day.app/your-key
+    server_url: "https://api.day.app/your-key"

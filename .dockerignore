@@ -1,0 +1,7 @@
+config.yaml
+.git
+.github
+__pycache__
+*.pyc
+.dockerignore
+Dockerfile
