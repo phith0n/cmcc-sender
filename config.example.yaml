@@ -5,10 +5,10 @@ server:
   auth_token: ""
 
 time:
-  # UTC 偏移小时数，新加坡/中国为 8
-  utc_offset: 8
-  # 时间显示格式（Python strftime），默认新加坡格式 dd/mm/yyyy
-  format: "%d/%m/%Y %H:%M:%S"
+  # IANA 时区名称，如 Asia/Singapore、Asia/Shanghai、America/New_York
+  timezone: "Asia/Singapore"
+  # 时间显示格式（Python strftime），默认 12 小时制
+  format: "%d/%m/%Y %I:%M:%S %p"
 
 notifiers:
   telegram:

@@ -1,4 +1,7 @@
+import logging
 import requests
+
+logger = logging.getLogger("cmcc-sender.telegram")
 
 
 def send(sms_data, config):
@@ -14,9 +17,12 @@ def send(sms_data, config):
         f"内容: {sms_data['message']}"
     )
 
+    logger.info("Sending to chat_id=%s", chat_id)
     resp = requests.post(url, json={
         "chat_id": chat_id,
         "text": text,
     }, timeout=10)
+    if not resp.ok:
+        logger.error("Telegram responded %s: %s", resp.status_code, resp.text)
     resp.raise_for_status()
     return {"platform": "telegram", "success": True}

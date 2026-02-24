@@ -1,12 +1,21 @@
 import os
-from datetime import datetime, timezone, timedelta
+import logging
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import yaml
 from flask import Flask, request, jsonify
 from notifiers import dispatch
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger("cmcc-sender")
+
 app = Flask(__name__)
 
 config_path = os.environ.get("CONFIG_PATH", "config.yaml")
+logger.info("Loading config from %s", config_path)
 with open(config_path, "r", encoding="utf-8") as f:
     config = yaml.safe_load(f)
 
@@ -23,15 +32,20 @@ def check_auth():
 @app.route("/sms", methods=["POST"])
 def receive_sms():
     if not check_auth():
+        logger.warning("Unauthorized request from %s", request.remote_addr)
         return jsonify({"error": "unauthorized"}), 401
 
     data = request.get_json(silent=True)
     if not data:
+        logger.warning("Received invalid JSON from %s", request.remote_addr)
         return jsonify({"error": "invalid JSON"}), 400
 
     missing = [f for f in ("sender", "message", "timestamp") if f not in data]
     if missing:
+        logger.warning("Missing fields: %s", ", ".join(missing))
         return jsonify({"error": f"missing fields: {', '.join(missing)}"}), 400
+
+    logger.info("Received SMS from %s, message: %s", data.get("sender"), data.get("message"))
 
     ts = data["timestamp"]
     try:
@@ -39,9 +53,9 @@ def receive_sms():
         if ts_val > 1e12:
             ts_val = ts_val / 1000
         time_conf = config.get("time", {})
-        utc_offset = time_conf.get("utc_offset", 8)
-        time_format = time_conf.get("format", "%d/%m/%Y %H:%M:%S")
-        tz = timezone(timedelta(hours=utc_offset))
+        tz_name = time_conf.get("timezone", "Asia/Singapore")
+        time_format = time_conf.get("format", "%d/%m/%Y %I:%M:%S %p")
+        tz = ZoneInfo(tz_name)
         data["timestamp"] = datetime.fromtimestamp(ts_val, tz=tz).strftime(time_format)
     except (ValueError, TypeError, OSError):
         pass
