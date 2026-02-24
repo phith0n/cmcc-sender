@@ -1,6 +1,5 @@
 import logging
 import requests
-from urllib.parse import quote
 
 logger = logging.getLogger("cmcc-sender.bark")
 
@@ -15,10 +14,11 @@ def send(sms_data, config):
         f"内容: {sms_data['message']}"
     )
 
-    url = f"{server_url}/{quote(title)}/{quote(body)}"
-
-    logger.info("POST %s", server_url + "/...")
-    resp = requests.get(url, timeout=10)
+    logger.info("POST %s", server_url)
+    resp = requests.post(server_url, json={
+        "title": title,
+        "body": body,
+    }, timeout=10)
     if not resp.ok:
         logger.error("Bark responded %s: %s", resp.status_code, resp.text)
     resp.raise_for_status()
